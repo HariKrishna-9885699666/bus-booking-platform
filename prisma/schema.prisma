@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  phone         String?
+  password      String
+  role          String    @default("user") // user | admin
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  bookings      Booking[]
+}
+
+model Route {
+  id        String   @id @default(cuid())
+  fromCity  String
+  toCity    String
+  distance  Int
+  duration  Int      // minutes
+  createdAt DateTime @default(now())
+  trips     Trip[]
+
+  @@unique([fromCity, toCity])
+}
+
+model Bus {
+  id           String   @id @default(cuid())
+  operatorName String
+  busType      String   // AC_SLEEPER, NON_AC_SLEEPER, AC_SEATER, NON_AC_SEATER, VOLVO_MULTI_AXLE, LUXURY_COACH, RTC
+  totalSeats   Int
+  layoutType   String   // 2x2, 2x1
+  amenities    String   @default("[]") // JSON array
+  rating       Float    @default(4.0)
+  createdAt    DateTime @default(now())
+  trips        Trip[]
+}
+
+model Trip {
+  id            String    @id @default(cuid())
+  busId         String
+  routeId       String
+  departureTime DateTime
+  arrivalTime   DateTime
+  price         Float
+  availableSeats Int
+  status        String    @default("ACTIVE") // ACTIVE, CANCELLED, COMPLETED
+  createdAt     DateTime  @default(now())
+
+  bus      Bus      @relation(fields: [busId], references: [id])
+  route    Route    @relation(fields: [routeId], references: [id])
+  seats    Seat[]
+  bookings Booking[]
+
+  @@index([routeId, departureTime])
+  @@index([busId])
+}
+
+model Seat {
+  id         String   @id @default(cuid())
+  tripId     String
+  seatNumber String
+  row        Int
+  column     Int
+  deck       String   @default("lower") // lower, upper
+  seatType   String   @default("seater") // seater, sleeper
+  status     String   @default("AVAILABLE") // AVAILABLE, BOOKED, LOCKED, LADIES_ONLY
+  price      Float
+  lockedAt   DateTime?
+  lockedBy   String?
+  createdAt  DateTime @default(now())
+
+  trip Trip @relation(fields: [tripId], references: [id])
+
+  @@unique([tripId, seatNumber])
+  @@index([tripId, status])
+}
+
+model Booking {
+  id             String   @id @default(cuid())
+  userId         String
+  tripId         String
+  seats          String   // JSON array of seat IDs
+  passengerInfo  String   // JSON array of passenger details
+  totalAmount    Float
+  paymentStatus  String   @default("PENDING") // PENDING, PAID, REFUNDED, FAILED
+  bookingStatus  String   @default("CONFIRMED") // CONFIRMED, CANCELLED, COMPLETED
+  paymentId      String?
+  paymentMethod  String?
+  idempotencyKey String?  @unique
+  cancelledAt    DateTime?
+  refundAmount   Float?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+  trip Trip @relation(fields: [tripId], references: [id])
+
+  @@index([userId])
+  @@index([tripId])
+}
