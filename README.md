@@ -37,18 +37,48 @@ npx tsx prisma/seed.ts
 
 ### Environment Variables
 
-Copy `.env.example` or create `.env`:
+Copy `.env.example` to `.env` and fill in the following:
 
-```
+```env
+# Database
 DATABASE_URL="file:./dev.db"
-NEXTAUTH_SECRET="your-secret-here"
+
+# NextAuth
+NEXTAUTH_SECRET="" # Generate using: openssl rand -base64 32
 NEXTAUTH_URL="http://localhost:3000"
-RAZORPAY_KEY_ID="rzp_test_..."
-RAZORPAY_KEY_SECRET="..."
-STRIPE_PUBLISHABLE_KEY="pk_test_..."
-STRIPE_SECRET_KEY="sk_test_..."
-STRIPE_WEBHOOK_SECRET="whsec_test_..."
+
+# Razorpay (India Payments)
+RAZORPAY_KEY_ID=""
+RAZORPAY_KEY_SECRET=""
+
+# Stripe (Global Payments)
+STRIPE_PUBLISHABLE_KEY=""
+STRIPE_SECRET_KEY=""
+STRIPE_WEBHOOK_SECRET=""
 ```
+
+## API Keys Setup Guide
+
+### 1. NextAuth Secret
+Generate a secure random string for `NEXTAUTH_SECRET`:
+```bash
+openssl rand -base64 32
+```
+
+### 2. Stripe Keys
+1.  Sign in to the [Stripe Dashboard](https://dashboard.stripe.com/test/apikeys).
+2.  Ensure **Test Mode** is toggled on.
+3.  Copy the **Publishable key** (`pk_test_...`) and **Secret key** (`sk_test_...`).
+4.  For **Webhooks**:
+    *   Install [Stripe CLI](https://stripe.com/docs/stripe-cli).
+    *   Run `stripe listen --forward-to localhost:3000/api/payment/webhook/stripe`.
+    *   Copy the "webhook signing secret" (`whsec_...`).
+
+### 3. Razorpay Keys
+1.  Sign in to the [Razorpay Dashboard](https://dashboard.razorpay.com/).
+2.  Switch to **Test Mode** (bottom left sidebar).
+3.  Go to **Account & Settings** > **API Keys**.
+4.  Click **Generate Key** to get your `Key ID` and `Key Secret`.
 
 ### Development
 
